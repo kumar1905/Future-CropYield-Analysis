@@ -84,7 +84,35 @@
         </form>
 
         {% if prediction %}
-        <h2 class="text-center mt-4">Predicted Yield: <br>{{ prediction }} kg/ha</h2>
+        <div class="text-center mt-4">
+            <h2>Predicted Yield: <br>{{ prediction }} kilograms per hectare</h2>
+            <button class="btn btn-info btn-speak" onclick="speakPrediction({{ prediction }})">Speak Prediction</button>
+            <p id="predictionStatus"></p>
+        </div>
+        <script>
+            function speakPrediction(prediction) {
+                let message = `Predicted yield is ${prediction} kilograms per hectare.`;
+                let predictionStatus = document.getElementById("predictionStatus");
+
+                if ('speechSynthesis' in window) {
+                    var msg = new SpeechSynthesisUtterance(message);
+                    msg.lang = "en-US";
+
+                    window.speechSynthesis.speak(msg);
+
+                    // Determine yield status and update predictionStatus element
+                    if (prediction > 10000) {
+                        predictionStatus.innerText = "Good Yield (Above 10000 kg/ha)";
+                    } else if (prediction >= 5000 && prediction <= 10000) {
+                        predictionStatus.innerText = "Moderate Yield (5000 - 10000 kg/ha)";
+                    } else {
+                        predictionStatus.innerText = "Not Good Yield (Below 5000 kg/ha)";
+                    }
+                } else {
+                    alert('Sorry, your browser does not support speech synthesis.');
+                }
+            }
+        </script>
         {% endif %}
     </div>
 
@@ -99,7 +127,13 @@
                 recognition.start();
 
                 recognition.onresult = function(e) {
-                    document.getElementById(fieldId).value = e.results[0][0].transcript;
+                    // Convert the spoken result to a number for numeric fields
+                    let spokenText = e.results[0][0].transcript.trim();
+                    if (!isNaN(spokenText)) {
+                        document.getElementById(fieldId).value = Number(spokenText);
+                    } else {
+                        document.getElementById(fieldId).value = spokenText;
+                    }
                     recognition.stop();
                 };
 
@@ -109,6 +143,7 @@
             }
         }
     </script>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
 </body>
 </html>
